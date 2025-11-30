@@ -1,0 +1,17 @@
+body {
+    background-color: #212529;
+}
+
+.nav-link {
+    color: #adb5bd;
+}
+
+.nav-link.active {
+    background-color: #495057 !important;
+    color: #fff !important;
+    border-color: #495057 !important;
+}
+
+.card {
+    border: none;
+}

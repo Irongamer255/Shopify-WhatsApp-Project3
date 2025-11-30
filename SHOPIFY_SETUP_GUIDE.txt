@@ -1,0 +1,239 @@
+================================================================================
+          SHOPIFY INTEGRATION SETUP GUIDE
+          Shopify + WhatsApp Order Confirmation System
+================================================================================
+
+This guide will help you connect your Shopify store to this WhatsApp automation
+system so that customers automatically receive WhatsApp messages when they place
+orders.
+
+================================================================================
+STEP 1: DEPLOY YOUR APPLICATION TO A SERVER
+================================================================================
+
+Your application needs to be accessible from the internet so Shopify can send
+webhooks to it.
+
+Option A: Use a Cloud Service (Recommended for Production)
+-----------------------------------------------------------
+- Deploy to: Railway, Render, Heroku, DigitalOcean, or AWS
+- Make sure your server is running on a public URL
+- Example: https://your-app-name.railway.app
+
+Option B: Use Ngrok for Testing (Local Development)
+----------------------------------------------------
+If you want to test with Shopify before deploying:
+
+1. Download ngrok from: https://ngrok.com/download
+2. Install and run:
+   
+   ngrok http 8000
+
+3. You'll get a public URL like: https://abc123.ngrok.io
+4. Use this URL for testing (valid for 8 hours on free plan)
+
+================================================================================
+STEP 2: CONFIGURE SHOPIFY WEBHOOK
+================================================================================
+
+1. Login to Your Shopify Admin Panel
+   - Go to: https://your-store.myshopify.com/admin
+
+2. Navigate to Webhooks Settings
+   - Click: Settings (bottom left)
+   - Click: Notifications
+   - Scroll down to: Webhooks section
+   - Click: Create webhook
+
+3. Configure the Webhook
+   - Event: Select "Order creation"
+   - Format: JSON
+   - URL: Enter your webhook endpoint:
+     
+     https://your-domain.com/api/v1/webhooks/orders/create
+     
+     (Replace "your-domain.com" with your actual server URL)
+   
+   - Webhook API version: Latest (2024-01 or newer)
+
+4. Save the Webhook
+   - Click "Save webhook"
+   - Shopify will show you a "Signing secret" - COPY THIS!
+
+================================================================================
+STEP 3: UPDATE YOUR APPLICATION CONFIGURATION
+================================================================================
+
+1. Open the Configuration File
+   - File location: app/core/config.py
+
+2. Update the Following Settings:
+
+   SHOPIFY_WEBHOOK_SECRET = "paste_your_signing_secret_here"
+   
+   (This is the secret you copied from Shopify in Step 2)
+
+3. Configure WhatsApp Provider
+
+   For Selenium (Personal WhatsApp):
+   ----------------------------------
+   WHATSAPP_PROVIDER = "selenium"
+   
+   Then:
+   - Open your dashboard: http://your-domain.com
+   - Go to Settings tab
+   - Click "Connect WhatsApp"
+   - Scan the QR code with your phone
+   - Done! Session saved automatically
+
+   For Official WhatsApp Cloud API:
+   ---------------------------------
+   WHATSAPP_PROVIDER = "official"
+   WHATSAPP_API_TOKEN = "your_whatsapp_api_token"
+   WHATSAPP_PHONE_NUMBER_ID = "your_phone_number_id"
+
+4. Restart Your Server
+   - If using a cloud service, redeploy or restart
+   - If using ngrok locally: Ctrl+C and restart
+
+================================================================================
+STEP 4: TEST THE INTEGRATION
+================================================================================
+
+1. Place a Test Order
+   - Go to your Shopify store
+   - Add a product to cart
+   - Checkout as a customer
+   - Use a real phone number (with country code)
+   - Complete the purchase
+
+2. Verify the Webhook
+   - Check your server logs
+   - Look for: "Received order webhook for order #..."
+   - This confirms Shopify successfully sent the webhook
+
+3. Check WhatsApp Message
+   - The customer's phone should receive a WhatsApp message
+   - Message content: Order confirmation with order number and total
+
+4. View in Dashboard
+   - Open: http://your-domain.com
+   - The new order should appear in the orders table
+   - Status should change to "confirmed" in real-time
+
+================================================================================
+STEP 5: TROUBLESHOOTING
+================================================================================
+
+Problem: Webhook not received
+------------------------------
+- Check webhook URL is correct (no typos)
+- Ensure server is running and publicly accessible
+- Check Shopify webhook logs:
+  Settings → Notifications → Webhooks → Click your webhook → View recent deliveries
+
+Problem: HMAC verification failed
+----------------------------------
+- Verify SHOPIFY_WEBHOOK_SECRET is correct
+- Make sure there are no extra spaces in the secret
+- Re-copy the secret from Shopify webhook settings
+
+Problem: WhatsApp message not sent
+-----------------------------------
+For Selenium:
+- Check if chrome_data/ folder exists
+- Try reconnecting WhatsApp from dashboard
+- Check server logs for Selenium errors
+
+For Official API:
+- Verify WHATSAPP_API_TOKEN is valid
+- Verify WHATSAPP_PHONE_NUMBER_ID is correct
+- Check WhatsApp API dashboard for errors
+
+Problem: Order not showing in dashboard
+----------------------------------------
+- Check MySQL database is running
+- Verify DATABASE_URL in config.py is correct
+- Check server logs for database errors
+
+================================================================================
+ADDITIONAL CONFIGURATION (OPTIONAL)
+================================================================================
+
+Database Setup for Production
+------------------------------
+Update DATABASE_URL in app/core/config.py:
+
+For MySQL:
+mysql+pymysql://username:password@host:3306/database_name
+
+For PostgreSQL:
+postgresql://username:password@host:5432/database_name
+
+Redis Setup for Production
+---------------------------
+Update REDIS_URL in app/core/config.py:
+
+redis://username:password@host:6379/0
+
+Environment Variables (Recommended)
+------------------------------------
+Instead of hardcoding secrets in config.py, use environment variables:
+
+1. Create a .env file:
+   
+   SHOPIFY_WEBHOOK_SECRET=your_secret_here
+   WHATSAPP_API_TOKEN=your_token_here
+   DATABASE_URL=your_database_url_here
+
+2. The application will automatically load these
+
+================================================================================
+MONITORING AND MAINTENANCE
+================================================================================
+
+Dashboard Access
+----------------
+- URL: http://your-domain.com
+- View real-time orders
+- Monitor order statuses
+- View analytics
+- Configure settings
+
+Server Logs
+-----------
+Check logs regularly for:
+- Webhook receipts
+- WhatsApp send confirmations
+- Any errors or warnings
+
+Database Backups
+----------------
+- Backup your MySQL database regularly
+- Recommended: Daily automated backups
+
+================================================================================
+SUPPORT AND DOCUMENTATION
+================================================================================
+
+For detailed technical documentation, see:
+- walkthrough.md (in project root)
+
+For questions or issues:
+- Check server logs first
+- Review this guide
+- Contact your development team
+
+================================================================================
+                        SETUP COMPLETE!
+================================================================================
+
+Once all steps are completed:
+✓ Shopify will automatically send webhooks for new orders
+✓ WhatsApp messages will be sent automatically
+✓ Dashboard will update in real-time
+✓ Customer confirmations will be tracked
+
+No manual intervention required for each order!
+
+================================================================================

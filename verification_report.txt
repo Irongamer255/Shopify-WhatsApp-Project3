@@ -1,0 +1,25 @@
+SYSTEM VERIFICATION REPORT
+==========================
+
+[2025-11-23 02:33:13] [INFO] --- Checking File Integrity ---
+[2025-11-23 02:33:13] [PASS] File found: app/main.py
+[2025-11-23 02:33:13] [PASS] File found: app/core/config.py
+[2025-11-23 02:33:13] [PASS] File found: app/db/models.py
+[2025-11-23 02:33:13] [PASS] File found: app/db/database.py
+[2025-11-23 02:33:13] [PASS] File found: static/index.html
+[2025-11-23 02:33:13] [PASS] File found: static/js/app.js
+[2025-11-23 02:33:13] [PASS] File found: static/css/styles.css
+[2025-11-23 02:33:13] [PASS] File found: requirements.txt
+[2025-11-23 02:33:13] [PASS] File found: schema.sql
+[2025-11-23 02:33:13] [INFO] --- Checking Configuration ---
+[2025-11-23 02:33:13] [PASS] DATABASE_URL is set
+[2025-11-23 02:33:13] [PASS] SHOPIFY_WEBHOOK_SECRET is set
+[2025-11-23 02:33:13] [INFO] --- Checking Database Connection ---
+[2025-11-23 02:33:13] [PASS] Successfully connected to MySQL database
+[2025-11-23 02:33:13] [INFO] --- Checking Frontend Accessibility ---
+[2025-11-23 02:33:15] [PASS] Frontend reachable at http://localhost:8000
+[2025-11-23 02:33:17] [PASS] Static asset (app.js) reachable
+[2025-11-23 02:33:17] [INFO] --- Checking API Security & Logic ---
+[2025-11-23 02:33:19] [PASS] Security Check: Rejected missing HMAC
+[2025-11-23 02:33:21] [PASS] Happy Path: Order created successfully
+[2025-11-23 02:33:23] [PASS] Idempotency: Duplicate order skipped
