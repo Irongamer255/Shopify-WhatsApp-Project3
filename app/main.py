@@ -15,9 +15,10 @@ app = FastAPI(title=settings.PROJECT_NAME, openapi_url=f"{settings.API_V1_STR}/o
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 app.include_router(webhooks.router, prefix=f"{settings.API_V1_STR}/webhooks", tags=["webhooks"])
-from app.api.v1.endpoints import whatsapp_webhook, admin
+from app.api.v1.endpoints import whatsapp_webhook, admin, auth
 app.include_router(whatsapp_webhook.router, prefix=f"{settings.API_V1_STR}/webhooks", tags=["whatsapp"])
 app.include_router(admin.router, prefix=f"{settings.API_V1_STR}/admin", tags=["admin"])
+app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["auth"])
 
 @app.websocket("/ws/orders")
 async def websocket_endpoint(websocket: WebSocket):

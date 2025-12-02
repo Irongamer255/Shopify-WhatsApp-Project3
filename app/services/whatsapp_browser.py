@@ -13,7 +13,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 class SeleniumWhatsApp:
-    def __init__(self, headless=True):
+    def __init__(self, user_id: int, headless=True):
         self.options = Options()
         if headless:
             self.options.add_argument("--headless=new")
@@ -23,7 +23,8 @@ class SeleniumWhatsApp:
         
         # Persist user data to keep login session
         current_dir = os.getcwd()
-        user_data_dir = os.path.join(current_dir, "chrome_data")
+        # Use user-specific directory
+        user_data_dir = os.path.join(current_dir, "chrome_data", str(user_id))
         self.options.add_argument(f"--user-data-dir={user_data_dir}")
         
         self.driver = None

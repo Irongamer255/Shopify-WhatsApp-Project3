@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request, HTTPException, Header, Depends
 from sqlalchemy.orm import Session
 from app.db.database import get_db
-from app.db.models import Order, OrderStatus
+from app.db.models import Order, OrderStatus, User
 from app.core.config import settings
 import hmac
 import hashlib
@@ -26,14 +26,20 @@ async def verify_shopify_webhook(request: Request, x_shopify_hmac_sha256: str = 
         raise HTTPException(status_code=401, detail="Invalid HMAC signature")
     return True
 
-@router.post("/orders/create")
+@router.post("/{user_id}/orders/create")
 async def handle_order_create(
+    user_id: int,
     request: Request, 
     db: Session = Depends(get_db),
     verified: bool = Depends(verify_shopify_webhook)
 ):
+    # Verify user exists
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
     payload = await request.json()
-    logger.info(f"Received order create webhook: {payload.get('id')}")
+    logger.info(f"Received order create webhook for user {user_id}: {payload.get('id')}")
     
     # Extract relevant data
     shopify_order_id = str(payload.get("id"))
@@ -50,8 +56,9 @@ async def handle_order_create(
         logger.info(f"Order {order_number} already exists. Skipping.")
         return {"status": "skipped", "reason": "duplicate"}
     
-    # Create new order
+    # Create new order linked to user
     new_order = Order(
+        user_id=user.id,
         shopify_order_id=shopify_order_id,
         order_number=order_number,
         customer_phone=customer_phone,
@@ -67,12 +74,11 @@ async def handle_order_create(
     db.commit()
     db.refresh(new_order)
     
-    # Trigger async task for smart delay (e.g., 30 minutes = 1800 seconds)
-    # For testing, we can use a shorter delay like 10 seconds
+    # Trigger async task
     from app.worker.tasks import send_order_confirmation
     send_order_confirmation.apply_async(args=[new_order.id], countdown=10)
     
-    # Broadcast to WebSocket clients
+    # Broadcast to WebSocket clients (TODO: Filter by user)
     from app.services.websocket import manager
     await manager.broadcast({
         "type": "new_order",

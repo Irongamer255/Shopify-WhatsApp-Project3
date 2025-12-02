@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.db.database import get_db
-from app.db.models import Config, Order
+from app.db.models import Config, Order, OrderStatus, User
+from app.api.v1.endpoints.auth import get_current_user
 from pydantic import BaseModel
 from typing import List
 
@@ -23,11 +24,14 @@ class OrderSchema(BaseModel):
         orm_mode = True
 
 @router.get("/analytics")
-def get_analytics(db: Session = Depends(get_db)):
-    total_orders = db.query(Order).count()
-    confirmed_orders = db.query(Order).filter(Order.status == OrderStatus.CONFIRMED).count()
-    cancelled_orders = db.query(Order).filter(Order.status == OrderStatus.CANCELLED).count()
-    delivered_orders = db.query(Order).filter(Order.status == OrderStatus.DELIVERED).count()
+def get_analytics(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    # Filter by user
+    query = db.query(Order).filter(Order.user_id == current_user.id)
+    
+    total_orders = query.count()
+    confirmed_orders = query.filter(Order.status == OrderStatus.CONFIRMED).count()
+    cancelled_orders = query.filter(Order.status == OrderStatus.CANCELLED).count()
+    delivered_orders = query.filter(Order.status == OrderStatus.DELIVERED).count()
     
     return {
         "total_orders": total_orders,
@@ -39,7 +43,7 @@ def get_analytics(db: Session = Depends(get_db)):
 from fastapi import BackgroundTasks
 
 @router.post("/whatsapp/link")
-def link_whatsapp_device(background_tasks: BackgroundTasks):
+def link_whatsapp_device(background_tasks: BackgroundTasks, current_user: User = Depends(get_current_user)):
     """
     Triggers the Selenium browser to open for linking.
     Runs in background to not block the API.
@@ -47,7 +51,8 @@ def link_whatsapp_device(background_tasks: BackgroundTasks):
     from app.services.whatsapp_browser import SeleniumWhatsApp
     
     def run_linking():
-        bot = SeleniumWhatsApp(headless=False)
+        # Pass user_id
+        bot = SeleniumWhatsApp(user_id=current_user.id, headless=False)
         bot.link_device()
         
     background_tasks.add_task(run_linking)
@@ -71,6 +76,7 @@ def update_config(config: ConfigUpdate, db: Session = Depends(get_db)):
     return {"status": "updated"}
 
 @router.get("/orders", response_model=List[OrderSchema])
-def get_orders(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    orders = db.query(Order).order_by(Order.created_at.desc()).offset(skip).limit(limit).all()
+def get_orders(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    # Filter by user
+    orders = db.query(Order).filter(Order.user_id == current_user.id).order_by(Order.created_at.desc()).offset(skip).limit(limit).all()
     return orders

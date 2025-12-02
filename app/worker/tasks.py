@@ -32,7 +32,8 @@ def send_order_confirmation(self, order_id: int):
             logger.info(f"Using Selenium Provider for Order {order.order_number}")
             try:
                 from app.services.whatsapp_browser import SeleniumWhatsApp
-                bot = SeleniumWhatsApp(headless=True) # Run headless in background
+                # Use user_id from order
+                bot = SeleniumWhatsApp(user_id=order.user_id, headless=True) 
                 bot.start()
                 
                 message = f"Hello {order.customer_name}, your order {order.order_number}} of {order.currency} {order.total_price} is confirmed!"

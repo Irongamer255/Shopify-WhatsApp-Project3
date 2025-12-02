@@ -25,11 +25,22 @@ class Merchant(Base):
     
     orders = relationship("Order", back_populates="merchant")
 
+class User(Base):
+    __tablename__ = "users"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String(255), unique=True, index=True)
+    hashed_password = Column(String(255))
+    is_active = Column(Boolean, default=True)
+    
+    orders = relationship("Order", back_populates="user")
+
 class Order(Base):
     __tablename__ = "orders"
 
     id = Column(Integer, primary_key=True, index=True)
-    merchant_id = Column(Integer, ForeignKey("merchants.id"), nullable=True) # Nullable for backward compat/default
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True) # Link to User
+    merchant_id = Column(Integer, ForeignKey("merchants.id"), nullable=True) # Keep for backward compat
     shopify_order_id = Column(String(255), unique=True, index=True)
     order_number = Column(String(255), index=True)
     customer_phone = Column(String(255))
@@ -52,6 +63,7 @@ class Order(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     merchant = relationship("Merchant", back_populates="orders")
+    user = relationship("User", back_populates="orders")
     logs = relationship("MessageLog", back_populates="order")
 
 class MessageLog(Base):

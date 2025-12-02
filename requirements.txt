@@ -14,3 +14,5 @@ cryptography
 fpdf
 selenium
 webdriver-manager
+passlib[bcrypt]
+python-jose[cryptography]
